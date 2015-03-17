@@ -6,7 +6,6 @@ LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE.GPL;md5=930e2a5f63425d8dd72dbd7391c43c46"
 
 DEPENDS = " \
-	libfslvpuwrap \
 	alsa-lib \
 	python \
 	python-distutils \
@@ -68,17 +67,25 @@ DEPENDS = " \
 	avahi \
 	cairo pango fontconfig freetype \
 	ffmpeg-kodi \
-	libcec-imx \
 "
 
-DEPENDS_append_mx6 = " virtual/kernel virtual/libgles2 virtual/egl "
+DEPENDS_append = " virtual/kernel \
+                   virtual/libgles2 \
+                   virtual/egl \
+                 "
 
+DEPENDS_append_mx6 = " libfslvpuwrap \
+                       libcec-imx \
+                     "
 # todo: libbluray 
 
+RDEPENDS_${PN} = "lsb \
+                  ${PN}-bin \
+                 "
 
 INC_PR = "r1"
 SRC_URI = "git://github.com/xbmc/xbmc.git;branch=Helix"
-
+SRC_URI += "file://Fix_JsonSchemaBuilder_build.patch"
 
 S = "${WORKDIR}/git/"
 
@@ -88,11 +95,9 @@ EXTRA_OECONF=" --disable-debug \
 	--host=${HOST_SYS} \
 	--target=${TARGET_SYS} ${@append_libtool_sysroot(d)} \
 	--disable-rpath \
-	--prefix=/imx6/xbmc \
 	--disable-pulse \
 	--disable-projectm \
 	--disable-x11 \
-	--disable-sdl \
 	--disable-libcec \
 	--disable-tiff \
 	--disable-xrandr \
@@ -102,7 +107,6 @@ EXTRA_OECONF=" --disable-debug \
 	--disable-openmax \
 	--enable-gles \
 	--enable-udev \
-	--enable-codec=imxvpu \
 	--disable-texturepacker \
 	--enable-airplay \
 	--enable-airtunes \
@@ -110,13 +114,22 @@ EXTRA_OECONF=" --disable-debug \
 	--enable-avahi \
 	--disable-mid \
 	--enable-rsxs \
-	--enable-libcec \
-	LIBS=' -llzma '"
+	LIBS=' -llzma ' \
+           "
+
+EXTRA_OECONF_append = "${@bb.utils.contains('MACHINE', 'mx6', ' --prefix=/imx6/xbmc', ' --prefix=/usr', d)}"
+
+#With no sdl, they will have no joystick ...
+EXTRA_OECONF_append=" --disable-sdl \
+	              --disable-joystick \
+	            "
+
 
 CXXFLAGS += " -I${STAGING_KERNEL_DIR}/include/uapi -I${STAGING_KERNEL_DIR}/include "
 CFLAGS += " -I${STAGING_KERNEL_DIR}/include/uapi -I${STAGING_KERNEL_DIR}/include "
 
-FILES_${PN} += "/imx6 /usr/share/icons/hicolor"
+FILES_${PN} += "/usr/share/icons/hicolor"
+FILES_${PN}_mx6 += " /imx6"
 
 
 EXTRA_OEMAKE = "'BUILDDIR=${S}/build'"
@@ -142,13 +155,12 @@ do_compile() {
 do_install() {
    cd ${S}
    make -j 8 BUILDDIR=${BUILDDIR} DESTDIR=${D} install
+   rm -fr   ${D}/usr/lib/xbmc
+   rm -fr   ${D}/usr/share/xbmc
+   rm -f   ${D}/usr/share/xsessions/xbmc.desktop
 }
 
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 INHIBIT_PACKAGE_STRIP = "1"
 
-PACKAGES = "${PN}"
-
-
-
-
+FILES_${PN} += "/usr/share/xsessions/kodi.desktop"

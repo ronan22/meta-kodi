@@ -1,6 +1,7 @@
 DESCRIPTION = "FFMPEG for Kodi"
 
-DEPENDS += " zlib "
+DEPENDS_append = " zlib"
+DEPENDS_append = " nasm-native"
 
 LICENSE = "GPLv2"
 
@@ -18,7 +19,7 @@ SRC_URI[sha256sum] = "cbaac116254004f993a0c62bb77e13745c9ac00960f2a0ef088baf09b0
 S = "${WORKDIR}/FFmpeg-2.4.4-Helix/"
 
 EXTRA_OECONF = " \
-	--prefix=${prefix} \
+        --prefix=${prefix} \
         --arch=${TARGET_ARCH} \
         --cross-prefix=${TARGET_PREFIX} \
         --disable-stripping \
@@ -26,13 +27,17 @@ EXTRA_OECONF = " \
         --enable-pthreads \
         --enable-shared \
         --enable-swscale \
-	--enable-pic \
+        --enable-pic \
         --target-os=linux \
-	--enable-gpl \
-	--sysroot=${STAGING_DIR_HOST} \
-	--disable-vdpau \
-	--extra-cflags=' -march=armv7-a -mfloat-abi=hard -mfpu=neon -mtune=cortex-a9' \
+        --enable-gpl \
+        --sysroot=${STAGING_DIR_HOST} \
+        --disable-vdpau \
 "
+
+
+
+EXTRA_OECONF_append_mx6 = " --extra-cflags=' -march=armv7-a -mfloat-abi=hard -mfpu=neon -mtune=cortex-a9'"
+
 FULL_OPTIMIZATION_armv7a = "-fexpensive-optimizations  -ftree-vectorize -fomit-frame-pointer -O4 -ffast-math"
 BUILD_OPTIMIZATION = "${FULL_OPTIMIZATION}"
 
