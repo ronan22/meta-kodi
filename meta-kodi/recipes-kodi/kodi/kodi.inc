@@ -3,11 +3,13 @@
 DESCRIPTION = "Kodi - Media player and entertainment hub"
 LICENSE = "GPLv2"
 
+INC_PR = "r1"
+SRC_URI = "git://github.com/xbmc/xbmc.git;branch=Helix"
+SRC_URI += "file://Fix_JsonSchemaBuilder_build.patch"
+
 LIC_FILES_CHKSUM = "file://LICENSE.GPL;md5=930e2a5f63425d8dd72dbd7391c43c46"
 
-DEPENDS = " \
-	alsa-lib \
-	python \
+KODI_DEPENDENCY = " \
 	python-distutils \
 	python-textutils \
 	python-sqlite3 \
@@ -35,19 +37,25 @@ DEPENDS = " \
 	python-pkgutil \
 	python-pycairo \
 	python-mako \
+	"
+
+DEPENDS = " \
+	${KODI_DEPENDENCY} \
+	alsa-lib \
+	python \
 	mpeg2dec \
 	boost \
 	cmake \
 	zlib \
 	dbus \
-        libass \
-        mariadb \
-        swig \
+	libass \
+	mariadb \
+	swig \
 	libmodplug \
 	yajl \
 	libtinyxml \
 	libcdio \
-        jasper \
+	jasper \
 	libssh \
 	samba \
 	taglib \
@@ -63,9 +71,10 @@ DEPENDS = " \
 	udev \
 	curl \
 	lzo \
-	shairplay \
-	avahi \
-	cairo pango fontconfig freetype \
+	cairo \
+	pango \
+	fontconfig \
+	freetype \
 	ffmpeg-kodi \
 "
 
@@ -81,54 +90,56 @@ DEPENDS_append_mx6 = " libfslvpuwrap \
 
 RDEPENDS_${PN} = "lsb \
                   ${PN}-bin \
+                  ${KODI_DEPENDENCY} \
                  "
-
-INC_PR = "r1"
-SRC_URI = "git://github.com/xbmc/xbmc.git;branch=Helix"
-SRC_URI += "file://Fix_JsonSchemaBuilder_build.patch"
 
 S = "${WORKDIR}/git/"
 
 inherit autotools lib_package pkgconfig gettext python-dir
+
+#PACKAGECONFIG_GL ?= "${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'opengl', '', d)}"
+PACKAGECONFIG_GL ?= "${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'gles2', '', d)}"
+
+PACKAGECONFIG ?= " \
+                  ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'x11', '', d)} \
+                  ${PACKAGECONFIG_GL} \
+                  udev \
+                  avahi \
+                  airplay \
+                 "
+                 
+PACKAGECONFIG[x11]    = "--enable-x11 --enable-xrandr,--disable-x11 --disable-xrandr,virtual/libx11"
+PACKAGECONFIG[opengl] = "--enable-gl,--disable-gl,virtual/libgl libglu glew"
+PACKAGECONFIG[gles2]  = "--enable-gles ,--disable-gles , virtual/libgles2 virtual/egl "
+PACKAGECONFIG[openmax]  = "--enable-openmax,--disable-openmax, libomxil"
+PACKAGECONFIG[udev]   = "--enable-udev,--disable-udev,udev"
+PACKAGECONFIG[libva]  = "--enable-vaapi,--disable-vaapi,libva libav"
+PACKAGECONFIG[sdl]    = "--enable-sdl --enable-joystick,--disable-sdl --disable-joystick,sdl"
+PACKAGECONFIG[avahi]  = "--enable-avahi,--disable-avahi,avahi"
+PACKAGECONFIG[libcec] = "--enable-libcec,--disable-libcec, libcec"
+PACKAGECONFIG[airplay]    = "--enable-airplay --enable-airtunes,--disable-airplay --disable-airtunes, shairplay"
+PACKAGECONFIG[pulseaudio] = "--enable-pulse,--disable-pulse, pulseaudio"
+
 EXTRA_OECONF=" --disable-debug \
 	--build=${BUILD_SYS} \
 	--host=${HOST_SYS} \
-	--target=${TARGET_SYS} ${@append_libtool_sysroot(d)} \
-	--disable-rpath \
-	--disable-pulse \
-	--disable-projectm \
-	--disable-x11 \
-	--disable-libcec \
-	--disable-tiff \
-	--disable-xrandr \
-	--disable-gl \
-	--disable-vdpau \
-	--disable-vaapi \
-	--disable-openmax \
-	--enable-gles \
-	--enable-udev \
-	--disable-texturepacker \
-	--enable-airplay \
-	--enable-airtunes \
+	--target=${TARGET_SYS} \
+	${@append_libtool_sysroot(d)} \
 	--enable-optimizations \
-	--enable-avahi \
+	--disable-projectm \
+	--disable-vdpau \
+	--disable-texturepacker \
 	--disable-mid \
 	--enable-rsxs \
 	LIBS=' -llzma ' \
            "
-
+	
 EXTRA_OECONF_append = "${@bb.utils.contains('MACHINE', 'mx6', ' --prefix=/imx6/xbmc', ' --prefix=/usr', d)}"
-
-#With no sdl, they will have no joystick ...
-EXTRA_OECONF_append=" --disable-sdl \
-	              --disable-joystick \
-	            "
-
 
 CXXFLAGS += " -I${STAGING_KERNEL_DIR}/include/uapi -I${STAGING_KERNEL_DIR}/include "
 CFLAGS += " -I${STAGING_KERNEL_DIR}/include/uapi -I${STAGING_KERNEL_DIR}/include "
 
-FILES_${PN} += "/usr/share/icons/hicolor"
+FILES_${PN} += "${datadir}/icons/hicolor"
 FILES_${PN}_mx6 += " /imx6"
 
 
@@ -149,18 +160,18 @@ do_configure() {
 
 do_compile() {
    cd ${S}
-   make -j 8 BUILDDIR=${BUILDDIR} DESTDIR=${D}
+   oe_runmake BUILDDIR=${BUILDDIR} DESTDIR=${D}
 }
 
 do_install() {
    cd ${S}
-   make -j 8 BUILDDIR=${BUILDDIR} DESTDIR=${D} install
-   rm -fr   ${D}/usr/lib/xbmc
-   rm -fr   ${D}/usr/share/xbmc
-   rm -f   ${D}/usr/share/xsessions/xbmc.desktop
+   oe_runmake BUILDDIR=${BUILDDIR} DESTDIR=${D} install
+   rm -fr   ${D}${prefix}/lib/xbmc
+   rm -fr   ${D}${datadir}/xbmc
+   rm -f   ${D}${datadir}/xsessions/xbmc.desktop
 }
 
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 INHIBIT_PACKAGE_STRIP = "1"
 
-FILES_${PN} += "/usr/share/xsessions/kodi.desktop"
+FILES_${PN} += "${datadir}/xsessions/kodi.desktop"

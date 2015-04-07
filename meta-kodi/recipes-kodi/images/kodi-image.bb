@@ -1,6 +1,9 @@
-include recipes-core/images/core-image-base.bb
+#include recipes-core/images/core-image-base.bb
 #include recipes-graphics/images/core-image-weston.bb
-#include recipes-graphics/images/core-image-x11.bb
+include recipes-graphics/images/core-image-x11.bb
+#include recipes-sato/images/core-image-sato.bb
+#include recipes-core/images/build-appliance-image_8.0.bb
+
 #Based on meta-stef by Wolfgar
 
 LICENSE = "MIT"
@@ -17,6 +20,10 @@ EXTRA_IMAGE_FEATURES += " \
 "
 
 IMAGE_INSTALL += " \
+    mesa \
+    piglit \
+    libegl-gallium \
+    mesa-demos \
     mpeg2dec \
     openssh-sftp-server \
     kodi \
@@ -30,41 +37,26 @@ IMAGE_INSTALL += " \
     ethtool \
     samba \
     curl \
-    python-distutils \
-    python-textutils \
-    python-sqlite3 \
-    python-pickle \
-    python-logging \
-    python-elementtree \
-    python-curses \
-    python-compile \
-    python-compiler \
-    python-fcntl \
-    python-shell \
-    python-multiprocessing \
-    python-subprocess \
-    python-xmlrpc \
-    python-netclient \
-    python-netserver \
-    python-unixadmin \
-    python-compression \
-    python-json \
-    python-unittest \
-    python-mmap \
-    python-difflib \
-    python-pprint \
-    python-git \
-    python-pkgutil \
-    python-pycairo \
-    python-mako \
     gettext \
     glibc-gconv-ibm850 \
     glibc-gconv-cp1252 \
     glibc-gconv-utf-32 \
-    alsa-tools alsa-state alsa-utils-alsaconf \
+    alsa-tools \
+    alsa-state \
+    alsa-utils-alsaconf \
     pulseaudio \
     transmission \
 "
+
+#IMAGE_INSTALL += " \
+#    qemu \
+#    libvirt \
+#    libvirt-libvirtd \
+#    libvirt-virsh \
+#    kernel-module-kvm \
+#    kernel-module-kvm-intel \
+#    "
+
 ENABLE_BINARY_LOCALE_GENERATION = "1"
 
 export IMAGE_BASENAME = "kodi-image"
