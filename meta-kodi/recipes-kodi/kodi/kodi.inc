@@ -5,7 +5,8 @@ LICENSE = "GPLv2"
 
 INC_PR = "r1"
 SRC_URI = "git://github.com/xbmc/xbmc.git;branch=Helix"
-SRC_URI += "file://Fix_JsonSchemaBuilder_build.patch"
+SRC_URI += "file://Fix_JsonSchemaBuilder_build.patch \
+            file://0001-gettimeofday-fix-C-crosscompilation.patch "
 
 LIC_FILES_CHKSUM = "file://LICENSE.GPL;md5=930e2a5f63425d8dd72dbd7391c43c46"
 
@@ -78,10 +79,7 @@ DEPENDS = " \
 	ffmpeg-kodi \
 "
 
-DEPENDS_append = " virtual/kernel \
-                   virtual/libgles2 \
-                   virtual/egl \
-                 "
+DEPENDS_append = " virtual/kernel "
 
 DEPENDS_append_mx6 = " libfslvpuwrap \
                        libcec-imx \
@@ -97,8 +95,8 @@ S = "${WORKDIR}/git/"
 
 inherit autotools lib_package pkgconfig gettext python-dir
 
-#PACKAGECONFIG_GL ?= "${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'opengl', '', d)}"
-PACKAGECONFIG_GL ?= "${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'gles2', '', d)}"
+PACKAGECONFIG_GL ?= "${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'opengl', '', d)}"
+#PACKAGECONFIG_GL ?= "${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'gles2', '', d)}"
 
 PACKAGECONFIG ?= " \
                   ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'x11', '', d)} \
@@ -114,7 +112,7 @@ PACKAGECONFIG[gles2]  = "--enable-gles ,--disable-gles , virtual/libgles2 virtua
 PACKAGECONFIG[openmax]  = "--enable-openmax,--disable-openmax, libomxil"
 PACKAGECONFIG[udev]   = "--enable-udev,--disable-udev,udev"
 PACKAGECONFIG[libva]  = "--enable-vaapi,--disable-vaapi,libva libav"
-PACKAGECONFIG[sdl]    = "--enable-sdl --enable-joystick,--disable-sdl --disable-joystick,sdl"
+PACKAGECONFIG[sdl]    = "--enable-sdl --enable-joystick,--disable-sdl --disable-joystick, libsdl"
 PACKAGECONFIG[avahi]  = "--enable-avahi,--disable-avahi,avahi"
 PACKAGECONFIG[libcec] = "--enable-libcec,--disable-libcec, libcec"
 PACKAGECONFIG[airplay]    = "--enable-airplay --enable-airtunes,--disable-airplay --disable-airtunes, shairplay"
